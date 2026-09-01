@@ -1,0 +1,30 @@
+[
+  {
+    "id": 103,
+    "paciente": "Ana Gómez",
+    "documento": "28904511",
+    "especialidad": "clínica médica",
+    "fecha": "2026-08-15",
+    "hora": "09:30",
+    "confirmado": true
+  },
+  {
+    "id": 108,
+    "paciente": "Rocío Sosa",
+    "documento": "32456789",
+    "especialidad": "clínica médica",
+    "fecha": "2026-08-19",
+    "hora": "16:15",
+    "confirmado": true,
+    "observaciones": "Control post-operatorio"
+  },
+  {
+    "id": 109,
+    "paciente": "Sofía Torres",
+    "documento": "30111222",
+    "especialidad": "nutrición",
+    "fecha": "2026-08-20",
+    "hora": "09:00",
+    "confirmado": false
+  }
+]

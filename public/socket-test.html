@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cliente de prueba - TurnosRed</title>
+  </head>
+  <body>
+    <h1>Eventos en tiempo real de TurnosRed</h1>
+    <ul id="lista-eventos"></ul>
+
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script>
+      const socket = io('http://localhost:3000');
+      const lista = document.getElementById('lista-eventos');
+
+      function agregarEvento(texto) {
+        const item = document.createElement('li');
+        item.textContent = texto;
+        lista.prepend(item);
+      }
+
+      socket.on('connect', () => agregarEvento('Conectado al servidor: ' + socket.id));
+      socket.on('turno:nuevo', (turno) => agregarEvento('Nuevo turno: ' + JSON.stringify(turno)));
+      socket.on('turno:actualizado', (turno) =>
+        agregarEvento('Turno actualizado: ' + JSON.stringify(turno)),
+      );
+      socket.on('turno:eliminado', (turno) =>
+        agregarEvento('Turno eliminado: ' + JSON.stringify(turno)),
+      );
+    </script>
+  </body>
+</html>
