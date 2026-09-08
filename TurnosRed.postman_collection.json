@@ -1,0 +1,829 @@
+{
+	"info": {
+		"_postman_id": "03454c2e-9450-47bc-b0e4-90b456e7a2cf",
+		"name": "TurnosRed",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "58066375",
+		"_collection_link": "https://pablo-saitta-3033414.postman.co/workspace/Pablo-Saitta's-Workspace~2c6dea11-a8b4-43d1-8d2e-6fca9541222f/collection/58066375-03454c2e-9450-47bc-b0e4-90b456e7a2cf?action=share&source=collection_link&creator=58066375"
+	},
+	"item": [
+		{
+			"name": "Medicos",
+			"item": [
+				{
+					"name": "POST /medicos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 201\", () => {",
+									"  pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"La respuesta tiene la forma de un médico\", () => {",
+									"  const medico = pm.response.json();",
+									"  pm.expect(medico).to.have.property(\"id\");",
+									"  pm.expect(medico).to.have.property(\"nombre\", \"Dra. Paula Ríos\");",
+									"  pm.expect(medico).to.have.property(\"especialidad\", \"Nutrición\");",
+									"  pm.expect(medico).to.have.property(\"disponible\", true);",
+									"});",
+									"",
+									"pm.test(\"Guarda el id del médico para las siguientes solicitudes\", () => {",
+									"  const medico = pm.response.json();",
+									"  pm.environment.set(\"medicoId\", medico.id);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Dra. Paula Ríos\",\n  \"especialidad\": \"Nutrición\",\n  \"matricula\": \"MP-13501\",\n  \"disponible\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/medicos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"medicos"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Éxito - 201 Created",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"nombre\": \"Dra. Paula Ríos\",\n  \"especialidad\": \"Nutrición\",\n  \"matricula\": \"MP-13501\",\n  \"disponible\": true\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/medicos",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"medicos"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "106"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"6a-ZStq8ie2/iNGpn0co8PtbcGoDis\""
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 08 Sep 2026 21:30:53 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 12,\n    \"nombre\": \"Dra. Paula Ríos\",\n    \"especialidad\": \"Nutrición\",\n    \"matricula\": \"MP-13501\",\n    \"disponible\": true\n}"
+						}
+					]
+				},
+				{
+					"name": "GET /medicos/:id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Devuelve el médico esperado\", () => {",
+									"  const medico = pm.response.json();",
+									"  pm.expect(medico.id).to.eql(Number(pm.environment.get(\"medicoId\")));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/medicos/{{medicoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"medicos",
+								"{{medicoId}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Éxito - 200 OK",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/medicos/{{medicoId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"medicos",
+										"{{medicoId}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "106"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"6a-ZStq8ie2/iNGpn0co8PtbcGoDis\""
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 08 Sep 2026 21:32:42 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 12,\n    \"nombre\": \"Dra. Paula Ríos\",\n    \"especialidad\": \"Nutrición\",\n    \"matricula\": \"MP-13501\",\n    \"disponible\": true\n}"
+						}
+					]
+				},
+				{
+					"name": "POST /medicos - especialidad inválida (400)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 400\", () => {",
+									"  pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Devuelve el formato estándar de error\", () => {",
+									"  const body = pm.response.json();",
+									"  pm.expect(body).to.have.property(\"status\", 400);",
+									"  pm.expect(body).to.have.property(\"code\", \"VALIDATION_ERROR\");",
+									"  pm.expect(body).to.have.property(\"details\").that.is.an(\"array\").with.length.above(0);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Dr. Falla\",\n  \"especialidad\": \"Cardiologia\",\n  \"matricula\": \"MP-99999\",\n  \"disponible\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/medicos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"medicos"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Error - 400 validacion",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"nombre\": \"Dr. Falla\",\n  \"especialidad\": \"Cardiologia\",\n  \"matricula\": \"MP-99999\",\n  \"disponible\": true\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/medicos",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"medicos"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "246"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"f6-fXJsLyXM3YPh/mSgdACm6UrIdqQ\""
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 08 Sep 2026 21:33:29 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": 400,\n    \"message\": \"Error de validación en los datos ingresados\",\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [\n        {\n            \"campo\": \"especialidad\",\n            \"mensaje\": \"Invalid option: expected one of \\\"Clínica médica\\\"|\\\"Pediatría\\\"|\\\"Odontología\\\"|\\\"Nutrición\\\"\"\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "GET /medicos/9999 - inexistente (404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 404\", () => {",
+									"  pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Código de error correcto\", () => {",
+									"  pm.expect(pm.response.json().code).to.eql(\"MEDICO_NOT_FOUND\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/medicos/9999",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"medicos",
+								"9999"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Error - 404 No Encontrado",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/medicos/9999",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"medicos",
+										"9999"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "104"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"68-8vkmvij5CLabsYx3O/fXgQBmbmY\""
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 08 Sep 2026 21:34:08 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": 404,\n    \"message\": \"No se encontró el médico con id 9999\",\n    \"code\": \"MEDICO_NOT_FOUND\",\n    \"details\": []\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Turnos",
+			"item": [
+				{
+					"name": "POST /turnos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 201\", () => {",
+									"  pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"El turno queda vinculado al médico correcto\", () => {",
+									"  const turno = pm.response.json();",
+									"  pm.expect(turno.medicoId).to.eql(2);",
+									"  pm.environment.set(\"turnoId\", turno.id);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"paciente\": \"Julián Vera\",\n  \"documento\": \"30998877\",\n  \"especialidad\": \"Clínica médica\",\n  \"fecha\": \"2026-09-10\",\n  \"hora\": \"11:00\",\n  \"confirmado\": false,\n  \"medicoId\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/turnos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"turnos"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Éxito - 201 Created",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"paciente\": \"Julián Vera\",\n  \"documento\": \"30998877\",\n  \"especialidad\": \"Clínica médica\",\n  \"fecha\": \"2026-09-10\",\n  \"hora\": \"11:00\",\n  \"confirmado\": false,\n  \"medicoId\": 2\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/turnos",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"turnos"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "161"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"a1-N4uwORyIpVRxB+bZTXYcugzYNnY\""
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 08 Sep 2026 21:34:45 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 110,\n    \"paciente\": \"Julián Vera\",\n    \"documento\": \"30998877\",\n    \"especialidad\": \"Clínica médica\",\n    \"fecha\": \"2026-09-10\",\n    \"hora\": \"11:00\",\n    \"confirmado\": false,\n    \"medicoId\": 2\n}"
+						}
+					]
+				},
+				{
+					"name": "GET /turnos - filtro especialidad y medicoId",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 200\", () => {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Todos los resultados coinciden con el filtro\", () => {",
+									"  const turnos = pm.response.json();",
+									"  turnos.forEach((turno) => {",
+									"    pm.expect(turno.medicoId).to.eql(2);",
+									"  });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/turnos?especialidad=Clínica médica&medicoId=2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"turnos"
+							],
+							"query": [
+								{
+									"key": "especialidad",
+									"value": "Clínica médica"
+								},
+								{
+									"key": "medicoId",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Éxito - 200 Filtrado",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/turnos?especialidad=Clínica médica&medicoId=2",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"turnos"
+									],
+									"query": [
+										{
+											"key": "especialidad",
+											"value": "Clínica médica"
+										},
+										{
+											"key": "medicoId",
+											"value": "2"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "686"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"2ae-eMZmlNV3iDIX7eudSAECjCd9BJw\""
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 08 Sep 2026 21:36:14 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 103,\n        \"paciente\": \"Ana Gómez\",\n        \"documento\": \"28904511\",\n        \"especialidad\": \"Clínica médica\",\n        \"fecha\": \"2026-08-15\",\n        \"hora\": \"09:30\",\n        \"confirmado\": true,\n        \"medicoId\": 2\n    },\n    {\n        \"id\": 108,\n        \"paciente\": \"Rocío Sosa\",\n        \"documento\": \"32456789\",\n        \"especialidad\": \"Clínica médica\",\n        \"fecha\": \"2026-08-19\",\n        \"hora\": \"16:15\",\n        \"confirmado\": true,\n        \"medicoId\": 2,\n        \"observaciones\": \"Control post-operatorio\"\n    },\n    {\n        \"id\": 109,\n        \"paciente\": \"Julián Vera\",\n        \"documento\": \"30998877\",\n        \"especialidad\": \"Clínica médica\",\n        \"fecha\": \"2026-09-10\",\n        \"hora\": \"11:00\",\n        \"confirmado\": false,\n        \"medicoId\": 2\n    },\n    {\n        \"id\": 110,\n        \"paciente\": \"Julián Vera\",\n        \"documento\": \"30998877\",\n        \"especialidad\": \"Clínica médica\",\n        \"fecha\": \"2026-09-10\",\n        \"hora\": \"11:00\",\n        \"confirmado\": false,\n        \"medicoId\": 2\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "POST /turnos - medico inexistente (404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 404\", () => {",
+									"  pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Código de error correcto\", () => {",
+									"  pm.expect(pm.response.json().code).to.eql(\"MEDICO_NOT_FOUND\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"paciente\": \"Julián Vera\",\n  \"documento\": \"30998877\",\n  \"especialidad\": \"Clínica médica\",\n  \"fecha\": \"2026-09-10\",\n  \"hora\": \"11:00\",\n  \"confirmado\": false,\n  \"medicoId\": 999\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/turnos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"turnos"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Error - 404 Médico no encontrado",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"paciente\": \"Julián Vera\",\n  \"documento\": \"30998877\",\n  \"especialidad\": \"Clínica médica\",\n  \"fecha\": \"2026-09-10\",\n  \"hora\": \"11:00\",\n  \"confirmado\": false,\n  \"medicoId\": 999\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/turnos",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"turnos"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "97"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"61-Tg8Q9yV2Vge1KT1+gtyoJTXZ4BM\""
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 08 Sep 2026 21:36:38 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": 404,\n    \"message\": \"No existe un médico con id 999\",\n    \"code\": \"MEDICO_NOT_FOUND\",\n    \"details\": []\n}"
+						}
+					]
+				},
+				{
+					"name": "DELETE /turnos/:id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 204\", () => {",
+									"  pm.response.to.have.status(204);",
+									"});",
+									"",
+									"pm.test(\"La respuesta no tiene cuerpo\", () => {",
+									"  pm.expect(pm.response.text()).to.eql(\"\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/turnos/{{turnoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"turnos",
+								"{{turnoId}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Éxito - 204 No Content",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/turnos/{{turnoId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"turnos",
+										"{{turnoId}}"
+									]
+								}
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 08 Sep 2026 21:37:02 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": null
+						}
+					]
+				}
+			]
+		}
+	]
+}

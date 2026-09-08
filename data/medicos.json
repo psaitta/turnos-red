@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "nombre": "Dra. Marta Sánchez",
+    "especialidad": "Pediatría",
+    "matricula": "MP-10234",
+    "disponible": true
+  },
+  {
+    "id": 2,
+    "nombre": "Dr. Jorge Beltrán",
+    "especialidad": "Clínica médica",
+    "matricula": "MP-11876",
+    "disponible": true
+  },
+  {
+    "id": 3,
+    "nombre": "Dra. Valeria Coria",
+    "especialidad": "Odontología",
+    "matricula": "MP-10457",
+    "disponible": false
+  },
+  {
+    "id": 4,
+    "nombre": "Dr. Ezequiel Nardi",
+    "especialidad": "Nutrición",
+    "matricula": "MP-12980",
+    "disponible": true
+  },
+  {
+    "id": 5,
+    "nombre": "Dra. Paula Ríos",
+    "especialidad": "Nutrición",
+    "matricula": "MP-13501",
+    "disponible": true
+  },
+  {
+    "id": 6,
+    "nombre": "Dra. Paula Ríos",
+    "especialidad": "Nutrición",
+    "matricula": "MP-13501",
+    "disponible": true
+  },
+  {
+    "id": 7,
+    "nombre": "Dra. Paula Ríos",
+    "especialidad": "Nutrición",
+    "matricula": "MP-13501",
+    "disponible": true
+  },
+  {
+    "id": 8,
+    "nombre": "Dra. Paula Ríos",
+    "especialidad": "Nutrición",
+    "matricula": "MP-13501",
+    "disponible": true
+  },
+  {
+    "id": 9,
+    "nombre": "Dra. Paula Ríos",
+    "especialidad": "Nutrición",
+    "matricula": "MP-13501",
+    "disponible": true
+  },
+  {
+    "id": 10,
+    "nombre": "Dra. Paula Ríos",
+    "especialidad": "Nutrición",
+    "matricula": "MP-13501",
+    "disponible": true
+  },
+  {
+    "id": 11,
+    "nombre": "Dra. Paula Ríos",
+    "especialidad": "Nutrición",
+    "matricula": "MP-13501",
+    "disponible": true
+  },
+  {
+    "id": 12,
+    "nombre": "Dra. Paula Ríos",
+    "especialidad": "Nutrición",
+    "matricula": "MP-13501",
+    "disponible": true
+  }
+]

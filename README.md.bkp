@@ -1,0 +1,126 @@
+# TurnosRed
+
+Backend para centralizar la gestión de turnos de varias sedes de atención ambulatoria (clínica médica, pediatría, odontología y nutrición). Construido con Node.js, TypeScript, Express, Zod y Socket.IO.
+
+## Requisitos previos
+
+- Visual Studio Code
+- Node.js (LTS), gestionado con [NVM](https://github.com/nvm-sh/nvm)
+- TypeScript
+- Express
+- Zod
+- Git / GitHub
+- Postman
+
+## Instalación
+
+````bash
+git clone <URL_DEL_REPOSITORIO>
+cd turnos-red
+nvm use
+cp .env.example .env
+npm install
+````
+
+## Ejecución
+
+````bash
+npm run dev     # desarrollo, con recarga automática
+npm run build   # compila TypeScript a dist/
+npm start       # ejecuta la versión compilada
+npm run lint    # analiza el código
+npm run format  # formatea el código
+````
+
+## Variables de entorno
+
+| Variable            | Descripción                                 | Valor por defecto      |
+| -------------------- | --------------------------------------------- | ------------------------ |
+| `PORT`              | Puerto en el que escucha el servidor HTTP    | `3000`                  |
+| `DATA_FILE_PATH`    | Ruta del archivo JSON con los turnos         | `./data/turnos.json`    |
+| `MEDICOS_FILE_PATH` | Ruta del archivo JSON con los médicos        | `./data/medicos.json`   |
+
+## Estructura de carpetas
+
+````
+turnos-red/
+├── data/                          # Datos crudos y persistidos (turnos.json, medicos.json)
+├── public/                        # Cliente HTML de prueba para Socket.IO
+├── turnos-red.postman_collection.json
+└── src/
+    ├── app.ts                     # Configuración de Express (middlewares, rutas, errores)
+    ├── server.ts                  # Punto de entrada: crea el servidor HTTP y Socket.IO
+    ├── config/                    # Carga de variables de entorno
+    ├── models/                    # Interfaces de dominio (Turno, Medico)
+    ├── schemas/                   # Schemas de validación con Zod (Turno, Medico)
+    ├── middlewares/               # validate (Zod) y errorHandler (formato de error estándar)
+    ├── services/                  # Normalización, filtros y acceso/CRUD sobre datos
+    ├── controllers/                # Lógica de cada endpoint HTTP
+    ├── routes/                    # Definición de rutas Express
+    ├── events/                    # Bus de eventos internos (EventEmitter)
+    ├── sockets/                   # Integración de Socket.IO con el EventEmitter
+    └── utils/                     # AppError y módulos auxiliares
+````
+
+## Formato estándar de errores
+
+Toda respuesta fallida de la API sigue esta estructura:
+
+````json
+{
+  "status": 400,
+  "message": "Error de validación en los datos ingresados",
+  "code": "VALIDATION_ERROR",
+  "details": []
+}
+````
+
+## Endpoints — Turnos
+
+| Método   | Ruta          | Descripción                                    |
+| -------- | -------------- | ------------------------------------------------- |
+| `GET`    | `/turnos`     | Lista turnos. Admite filtros por query params.    |
+| `GET`    | `/turnos/:id` | Obtiene un turno por id                           |
+| `POST`   | `/turnos`     | Crea un turno nuevo (valida contra Zod)           |
+| `PUT`    | `/turnos/:id` | Actualiza un turno existente                      |
+| `DELETE` | `/turnos/:id` | Elimina un turno (204 No Content)                 |
+
+Filtros disponibles en `GET /turnos`:
+
+- `?especialidad=Pediatría`
+- `?fecha=2026-08-14`
+- `?medicoId=1`
+- Combinables: `/turnos?especialidad=Pediatria&fecha=14/08/2026`
+
+## Endpoints — Médicos
+
+| Método   | Ruta          | Descripción                                    |
+| -------- | -------------- | ------------------------------------------------- |
+| `GET`    | `/medicos`    | Lista médicos. Admite filtros por query params.   |
+| `GET`    | `/medicos/:id`| Obtiene un médico por id                          |
+| `POST`   | `/medicos`    | Registra un nuevo médico (valida contra Zod)      |
+| `PUT`    | `/medicos/:id`| Actualiza la información de un médico             |
+| `DELETE` | `/medicos/:id`| Da de baja un médico (204 No Content)             |
+
+Filtros disponibles en `GET /medicos`:
+
+- `?especialidad=Odontología`
+- `?disponible=true`
+- Combinables: `/medicos?especialidad=Odontologia&disponible=true`
+
+## Colección de Postman
+
+El archivo `turnos-red.postman_collection.json` contiene la colección completa (Médicos y Turnos), con variables de entorno, tests automatizados por solicitud y ejemplos guardados para el Mock Server. Importalo en Postman con **File → Import**.
+
+## Uso de Inteligencia Artificial
+
+| Tarea | Herramienta | Prompt | Respuesta generada | Ajuste manual aplicado |
+| --- | --- | --- | --- | --- |
+| Middleware centralizado de errores | Claude (Anthropic) | Generar una clase `AppError` y un middleware de manejo de errores que unifique todas las respuestas fallidas de la API bajo el formato `{status, message, code, details}` pedido por la consigna | Clase `AppError` extendiendo `Error`, y funciones `notFoundHandler` / `errorHandler` para Express | Se verificó que `errorHandler` quedara como el último `app.use()` del archivo, después de las rutas y del `notFoundHandler`, para que Express lo reconozca como middleware de errores |
+| Middleware de validación con Zod | Claude (Anthropic) | Generar un middleware genérico `validate(schema)` que valide `req.body` contra un schema de Zod y delegue los errores al formato estándar de la API | Middleware que usa `schema.safeParse()` y arma un array `details` con `campo` y `mensaje` por cada error de Zod | Se ajustó el mensaje de error para que cada entrada del array indicara el nombre de campo exacto (`issue.path.join('.')`), en vez de un mensaje genérico |
+| Schemas Zod de Turno y Médico | Claude (Anthropic) | Generar los schemas de Zod para Turno y Médico, con `documento` como string flexible y `especialidad` restringida a los 4 valores en Title Case usados por el sistema | Schemas con `z.object()` y un `z.enum()` para especialidad usando `errorMap` para el mensaje personalizado | Se detectó que la versión instalada de Zod (v4.5.4) reemplazó la opción `errorMap` del enum por `error`; falta actualizar los schemas a la sintaxis de Zod v4 antes de compilar |
+| CRUD completo del recurso Médico | Claude (Anthropic) | Generar el modelo, servicio, controlador y rutas del recurso Médico siguiendo la misma arquitectura en capas que Turno | Archivos `medico.model.ts`, `medicos.service.ts`, `medicos.controller.ts` y `medicos.routes.ts` completos | Se agregó la variable de entorno `MEDICOS_FILE_PATH` en `.env`/`.env.example` y se actualizó `config/env.ts`, que no estaba contemplado en la respuesta inicial |
+| Vínculo Turno–Médico y filtros por query params | Claude (Anthropic) | Vincular Turno con Médico validando que el `medicoId` exista, y agregar filtros por especialidad/fecha/medicoId (turnos) y especialidad/disponible (médicos) sin crear endpoints nuevos | Función `verificarMedicoExiste()` en el servicio de turnos y filtros aplicados en la capa de servicios de ambos recursos | Se recreó manualmente el archivo `normalizarTurnos.ts` completo (borrado y recreado con `cat >`) porque quedó un carácter inválido al pegar el contenido en el editor, lo que rompía el parseo de ESLint |
+| Datos de ejemplo (`data/medicos.json` y `data/turnos.json` actualizado) | Claude (Anthropic) | Generar datos semilla de médicos y actualizar los turnos existentes agregando el campo `medicoId` | Archivos JSON con 4 médicos y los 6 turnos con `medicoId` agregado | Se corrigió manualmente un error de sintaxis: la palabra `EOF` había quedado pegada dentro de ambos archivos JSON por un problema al pegar el heredoc completo en la terminal |
+| Scripts de test para Postman | Claude (Anthropic) | Generar los scripts `pm.test` de cada solicitud de la colección, verificando código de estado, forma del JSON y encadenamiento de variables (`medicoId`, `turnoId`) entre solicitudes | Scripts JavaScript con `pm.test`, `pm.expect` y `pm.environment.set` para cada endpoint (happy path y casos de error) | Se corrigió un espacio de más entre `{{baseUrl}}` y la ruta en la URL de una solicitud, que hacía que Express interpretara mal la ruta con parámetro; también se aseguró que el entorno "TurnosRed - Local" estuviera seleccionado en el desplegable para que `pm.environment.set()` funcionara |
+| Documentación técnica (README.md) | Claude (Anthropic) | Actualizar el README con requisitos, instalación, variables de entorno, estructura de carpetas, endpoints con ejemplos de query params y la sección de uso de IA | Archivo README.md completo en formato Markdown | Se completó esta misma tabla con el detalle real de cada tarea asistida, en lugar de dejar la fila de ejemplo genérica |

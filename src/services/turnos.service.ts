@@ -2,14 +2,12 @@ import fs from 'node:fs/promises';
 import { env } from '../config/env.js';
 import { normalizarTurnos } from './normalizarTurnos.js';
 import { turnosEmitter } from '../events/turnosEmitter.js';
+import { obtenerMedicoPorId } from './medicos.service.js';
+import { AppError } from '../utils/AppError.js';
 import type { Turno, TurnoCrudo, TurnoNuevo } from '../models/turno.model.js';
 
 let turnos: Turno[] = [];
 
-/**
- * Lee y normaliza el archivo de turnos al iniciar el servidor.
- * Usa fs/promises con async/await y try...catch, según pide la consigna.
- */
 export async function inicializarTurnos(): Promise<void> {
   try {
     const contenido = await fs.readFile(env.dataFilePath, 'utf-8');
@@ -25,8 +23,22 @@ async function persistirTurnos(): Promise<void> {
   await fs.writeFile(env.dataFilePath, JSON.stringify(turnos, null, 2), 'utf-8');
 }
 
-export function obtenerTurnos(): Turno[] {
-  return turnos;
+interface FiltrosTurnos {
+  especialidad?: string;
+  fecha?: string;
+  medicoId?: number;
+}
+
+export function obtenerTurnos(filtros: FiltrosTurnos = {}): Turno[] {
+  return turnos.filter((turno) => {
+    const coincideEspecialidad = filtros.especialidad
+      ? turno.especialidad.toLowerCase() === filtros.especialidad.toLowerCase()
+      : true;
+    const coincideFecha = filtros.fecha ? turno.fecha === filtros.fecha : true;
+    const coincideMedico =
+      filtros.medicoId !== undefined ? turno.medicoId === filtros.medicoId : true;
+    return coincideEspecialidad && coincideFecha && coincideMedico;
+  });
 }
 
 export function obtenerTurnoPorId(id: number): Turno | undefined {
@@ -38,7 +50,16 @@ function generarNuevoId(): number {
   return idMaximo + 1;
 }
 
+function verificarMedicoExiste(medicoId: number): void {
+  const medico = obtenerMedicoPorId(medicoId);
+  if (!medico) {
+    throw new AppError(404, `No existe un médico con id ${medicoId}`, 'MEDICO_NOT_FOUND');
+  }
+}
+
 export async function crearTurno(datos: TurnoNuevo): Promise<Turno> {
+  verificarMedicoExiste(datos.medicoId);
+
   const nuevoTurno: Turno = { id: generarNuevoId(), ...datos };
   turnos.push(nuevoTurno);
   await persistirTurnos();
@@ -53,6 +74,10 @@ export async function actualizarTurno(
   const indice = turnos.findIndex((turno) => turno.id === id);
   if (indice === -1) {
     return null;
+  }
+
+  if (datos.medicoId !== undefined) {
+    verificarMedicoExiste(datos.medicoId);
   }
 
   const turnoActualizado: Turno = { ...turnos[indice], ...datos, id };

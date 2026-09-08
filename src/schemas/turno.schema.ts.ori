@@ -1,0 +1,27 @@
+import { z } from 'zod';
+
+/**
+ * Lista cerrada de especialidades en Title Case / PascalCase, tal como
+ * pide la consigna: "Clínica médica", "Pediatría", "Odontología", "Nutrición".
+ */
+export const ESPECIALIDADES = ['Clínica médica', 'Pediatría', 'Odontología', 'Nutrición'] as const;
+
+export const turnoSchema = z.object({
+  paciente: z.string().trim().min(1, 'El paciente es obligatorio'),
+  documento: z.string().trim().min(1, 'El documento es obligatorio'),
+  especialidad: z.enum(ESPECIALIDADES, {
+    errorMap: () => ({
+      message: `La especialidad debe ser una de: ${ESPECIALIDADES.join(', ')}`,
+    }),
+  }),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe tener el formato AAAA-MM-DD'),
+  hora: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'La hora debe tener el formato HH:MM'),
+  confirmado: z.boolean(),
+  medicoId: z.number().int().positive('medicoId debe ser un número entero positivo'),
+  observaciones: z.string().trim().optional(),
+});
+
+export const turnoUpdateSchema = turnoSchema.partial();
+
+export type TurnoInput = z.infer<typeof turnoSchema>;
+export type TurnoUpdateInput = z.infer<typeof turnoUpdateSchema>;

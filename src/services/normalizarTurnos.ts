@@ -1,4 +1,21 @@
 import type { Turno, TurnoCrudo } from '../models/turno.model.js';
+import { ESPECIALIDADES } from '../schemas/turno.schema.js';
+
+const MAPA_ESPECIALIDADES: Record<string, (typeof ESPECIALIDADES)[number]> = {
+  'clínica médica': 'Clínica médica',
+  'clinica medica': 'Clínica médica',
+  pediatría: 'Pediatría',
+  pediatria: 'Pediatría',
+  odontología: 'Odontología',
+  odontologia: 'Odontología',
+  nutrición: 'Nutrición',
+  nutricion: 'Nutrición',
+};
+
+function normalizarEspecialidad(valor: string): (typeof ESPECIALIDADES)[number] | null {
+  const clave = valor.trim().toLowerCase();
+  return MAPA_ESPECIALIDADES[clave] ?? null;
+}
 
 function normalizarFecha(fecha: string): string | null {
   const trimmed = fecha.trim();
@@ -36,16 +53,14 @@ function normalizarConfirmado(valor: string | boolean | number): boolean {
   if (typeof valor === 'boolean') {
     return valor;
   }
-
   if (typeof valor === 'number') {
     return valor === 1;
   }
-
   const normalizado = valor.trim().toLowerCase();
   return ['si', 'sí', 'true', '1', 'confirmado'].includes(normalizado);
 }
 
-function idComoEnteroPositivo(id: string): number | null {
+function idComoEnteroPositivo(id: string | number): number | null {
   const idNumerico = Number(id);
   if (!Number.isInteger(idNumerico) || idNumerico <= 0) {
     return null;
@@ -53,25 +68,23 @@ function idComoEnteroPositivo(id: string): number | null {
   return idNumerico;
 }
 
-/**
- * Convierte un registro crudo en un Turno de dominio.
- * Devuelve null si el registro no cumple con la estructura mínima esperada.
- */
 export function normalizarTurno(crudo: TurnoCrudo): Turno | null {
   const idValido = idComoEnteroPositivo(crudo.id);
   const paciente = crudo.paciente?.trim().replace(/\s+/g, ' ') ?? '';
   const documento = String(crudo.documento ?? '').trim();
-  const especialidad = crudo.especialidad?.trim().toLowerCase() ?? '';
+  const especialidad = normalizarEspecialidad(crudo.especialidad ?? '');
   const fecha = normalizarFecha(crudo.fecha ?? '');
   const hora = normalizarHora(crudo.hora ?? '');
+  const medicoId = idComoEnteroPositivo(crudo.medicoId);
 
   const esValido =
     idValido !== null &&
     paciente !== '' &&
     documento !== '' &&
-    especialidad !== '' &&
+    especialidad !== null &&
     fecha !== null &&
-    hora !== null;
+    hora !== null &&
+    medicoId !== null;
 
   if (!esValido) {
     return null;
@@ -81,10 +94,11 @@ export function normalizarTurno(crudo: TurnoCrudo): Turno | null {
     id: idValido as number,
     paciente,
     documento,
-    especialidad,
+    especialidad: especialidad as (typeof ESPECIALIDADES)[number],
     fecha: fecha as string,
     hora: hora as string,
     confirmado: normalizarConfirmado(crudo.confirmado),
+    medicoId: medicoId as number,
   };
 
   if (crudo.observaciones?.trim()) {
@@ -94,10 +108,6 @@ export function normalizarTurno(crudo: TurnoCrudo): Turno | null {
   return turno;
 }
 
-/**
- * Normaliza una lista completa de registros crudos, descarta los inválidos
- * e informa por consola cuántos fueron aceptados y cuántos rechazados.
- */
 export function normalizarTurnos(crudos: TurnoCrudo[]): Turno[] {
   let aceptados = 0;
   let rechazados = 0;
