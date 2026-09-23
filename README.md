@@ -1,30 +1,42 @@
 # TurnosRed
 
-API REST para la gestión de **médicos** y **turnos** de un centro de salud. Permite dar de alta médicos, consultar su disponibilidad, y crear, consultar y eliminar turnos asociados a ellos.
+API REST para la gestión de **médicos**, **turnos** y (próximamente) **pacientes** de un centro de salud, construida con Node.js, TypeScript y Express 5, siguiendo principios de Clean Architecture (rutas → controllers → services → persistencia en JSON).
 
 ## Tabla de contenidos
 
+- [Tecnologías](#tecnologías)
 - [Requisitos](#requisitos)
 - [Instalación y ejecución](#instalación-y-ejecución)
 - [Variables de entorno](#variables-de-entorno)
 - [Estructura de directorios](#estructura-de-directorios)
+- [Arquitectura y manejo de errores](#arquitectura-y-manejo-de-errores)
 - [Documentación de endpoints](#documentación-de-endpoints)
-- [Casos de prueba (Postman)](#casos-de-prueba-postman)
+- [Módulo Pacientes (propuesta)](#módulo-pacientes-propuesta)
+- [Pruebas](#pruebas)
 - [Uso de Inteligencia Artificial](#uso-de-inteligencia-artificial)
+
+## Tecnologías
+
+- Node.js (LTS)
+- TypeScript
+- Express 5
+- Zod (validación de esquemas)
+- tsx (ejecución en desarrollo con recarga automática)
+- Postman / Newman (pruebas de integración y E2E)
 
 ## Requisitos
 
 - Node.js 18 o superior
 - npm 9 o superior
-- Postman (o Newman) para ejecutar la colección de pruebas
+- Postman para ejecutar la colección de pruebas
 - Puerto `3000` libre en el entorno local
 
 ## Instalación y ejecución
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/psaitta/turnosred.git
-cd turnosred
+git clone https://github.com/pablosaitta/turnos-red.git
+cd turnos-red
 
 # 2. Instalar dependencias
 npm install
@@ -32,187 +44,185 @@ npm install
 # 3. Configurar variables de entorno
 cp .env.example .env
 
-# 4. Levantar el servidor en modo desarrollo
+# 4. Levantar el servidor en modo desarrollo (recarga automática con tsx)
 npm run dev
 
-# 5. (Opcional) Ejecutar en modo producción
+# 5. Compilar para producción
 npm run build
+
+# 6. Ejecutar la versión compilada
 npm start
+
+# Utilidades adicionales
+npm run lint     # ESLint sobre todo el proyecto
+npm run format   # Prettier, reescribe archivos
 ```
 
 El servidor queda disponible en `http://localhost:3000`.
 
-Para correr las pruebas de la colección de Postman vía línea de comandos:
-
-```bash
-npx newman run TurnosRed.postman_collection.json -e TurnosRed-Local.postman_environment.json
-```
-
 ## Variables de entorno
+
+Definidas y cargadas mediante `dotenv` en `src/config/env.ts`. Si una variable no está presente en `.env`, se usa su valor por defecto; `PORT` es la única sin la cual el servidor no arranca si además falta el valor por defecto.
 
 | Variable | Descripción | Valor por defecto |
 |---|---|---|
 | `PORT` | Puerto en el que escucha el servidor | `3000` |
-| `NODE_ENV` | Entorno de ejecución (`development` / `production`) | `development` |
-| `DB_PATH` | Ruta del archivo de base de datos (SQLite) | `./data/turnosred.db` |
-| `LOG_LEVEL` | Nivel de logging (`error`, `warn`, `info`, `debug`) | `info` |
-| `CORS_ORIGIN` | Origen permitido para CORS | `*` |
+| `MEDICOS_FILE_PATH` | Ruta del archivo JSON con los médicos | `./data/medicos.json` |
+| `DATA_FILE_PATH` | Ruta del archivo JSON con los turnos | `./data/turnos.json` |
+
+> Nota de seguridad (Módulo 4): el archivo `.env` real **nunca** se sube al repositorio — está excluido en `.gitignore`. Solo se versiona `.env.example` con los nombres de variable sin valores sensibles.
 
 ## Estructura de directorios
 
 ```
-turnosred/
+turnos-red/
 ├── src/
-│   ├── controllers/       # Lógica de manejo de requests (medicos, turnos)
-│   ├── routes/            # Definición de rutas Express
-│   ├── models/            # Esquemas y validaciones (Zod)
-│   ├── services/          # Lógica de negocio
-│   ├── middlewares/        # Manejo de errores, validaciones
-│   ├── db/                # Conexión y migraciones de base de datos
-│   └── app.js              # Configuración de la app Express
-├── tests/
-│   └── postman/            # Colección y entorno de Postman
-├── data/                    # Base de datos local (SQLite)
+│   ├── controllers/         # medicos.controller.ts, turnos.controller.ts, general.controller.ts
+│   ├── routes/               # medicos.routes.ts, turnos.routes.ts
+│   ├── services/             # medicos.service.ts, turnos.service.ts, normalizarTurnos.ts
+│   ├── schemas/               # medico.schema.ts, turno.schema.ts (validación Zod)
+│   ├── middlewares/           # errorHandler.ts, validate.ts
+│   ├── models/                 # medico.model.ts, turno.model.ts
+│   ├── events/                  # turnosEmitter.ts
+│   ├── config/                  # env.ts
+│   ├── data/                     # medicos.json, turnos.json
+│   ├── app.ts
+│   └── server.ts
+├── pacientes-turnos.md        # Propuesta del módulo Pacientes (mockup)
 ├── .env.example
+├── .gitignore
 ├── package.json
 └── README.md
 ```
 
-| Directorio | Contenido |
-|---|---|
-| `src/controllers` | Funciones que reciben la request y arman la respuesta |
-| `src/routes` | Definición de endpoints y métodos HTTP |
-| `src/models` | Esquemas de validación de médicos y turnos |
-| `src/services` | Reglas de negocio (ej. validar disponibilidad de un médico) |
-| `src/middlewares` | Manejo centralizado de errores y validaciones |
-| `src/db` | Configuración de la conexión y migraciones |
-| `tests/postman` | Colección `TurnosRed.postman_collection.json` y entorno `TurnosRed-Local` |
+## Arquitectura y manejo de errores
+
+Cada controller (`medicos.controller.ts`, `turnos.controller.ts`, `general.controller.ts`) es asincrónico, declara una variable `status` dinámica según el resultado, valida previamente los datos y envuelve toda su lógica en un bloque `try-catch`, respondiendo siempre con `return res.status(status).json(...)`.
+
+La validación de los datos de entrada (`body`) se resuelve mediante un middleware genérico `validate(schema)` (`src/middlewares/validate.ts`) que aplica un schema de **Zod** antes de llegar al controller. Si falla, delega el error al middleware centralizado de errores (`src/middlewares/errorHandler.ts`) mediante `next(error)`.
+
+Toda respuesta de error de la API respeta el mismo formato estándar:
+
+```json
+{
+  "status": 404,
+  "message": "No se encontró el médico con id 9999",
+  "code": "MEDICO_NOT_FOUND",
+  "details": []
+}
+```
+
+- `status`: código HTTP.
+- `message`: mensaje legible para el consumidor de la API.
+- `code`: identificador estable de la condición de error, para que el cliente tome decisiones sin depender del texto exacto de `message`.
+- `details`: información adicional controlada (por ejemplo, el detalle campo por campo de una validación fallida).
 
 ## Documentación de endpoints
 
 ### Médicos
 
-#### `POST /medicos`
-Crea un nuevo médico.
+#### `GET /medicos`
+Lista médicos, con filtros opcionales por query params.
 
-**Body:**
-```json
-{
-  "nombre": "Dra. Paula Ríos",
-  "especialidad": "Nutrición",
-  "matricula": "MP-13501"
-}
-```
+**Query params:**
+| Parámetro | Tipo | Ejemplo | Descripción |
+|---|---|---|---|
+| `especialidad` | string | `?especialidad=Nutrición` | Filtra por especialidad |
+| `disponible` | boolean (`"true"`/`"false"`) | `?disponible=true` | Filtra por disponibilidad |
 
-**Respuesta `201`:**
-```json
-{
-  "id": 12,
-  "nombre": "Dra. Paula Ríos",
-  "especialidad": "Nutrición",
-  "matricula": "MP-13501",
-  "disponible": true
-}
-```
+**Respuesta `200`:** array de médicos.
 
 #### `GET /medicos/:id`
 Obtiene un médico por id.
 
-```
-GET /medicos/9
-```
-
 **Respuesta `200`:**
 ```json
-{
-  "id": 9,
-  "nombre": "Dra. Paula Ríos",
-  "especialidad": "Nutrición",
-  "matricula": "MP-13501",
-  "disponible": true
-}
+{ "id": 9, "nombre": "Dra. Paula Ríos", "especialidad": "Nutrición", "matricula": "MP-13501", "disponible": true }
 ```
+**Respuesta `400`** (id no numérico): `code: "INVALID_ID"`.
+**Respuesta `404`** (id inexistente): `code: "MEDICO_NOT_FOUND"`.
 
-**Respuesta `404`** (id inexistente, ej. `/medicos/9999`):
+#### `POST /medicos`
+Crea un médico. Body validado contra `medicoSchema`.
+
+**Body:**
 ```json
-{
-  "error": "Médico no encontrado"
-}
+{ "nombre": "Dra. Paula Ríos", "especialidad": "Nutrición", "matricula": "MP-13501", "disponible": true }
 ```
+Especialidades válidas: `Clínica médica`, `Pediatría`, `Odontología`, `Nutrición`.
+
+**Respuesta `201`:** el médico creado, con `id` asignado.
+**Respuesta `400`** (`code: "VALIDATION_ERROR"`): detalle campo por campo en `details`.
+
+#### `PUT /medicos/:id`
+Actualiza parcialmente un médico. Body validado contra `medicoUpdateSchema` (todos los campos opcionales).
+
+**Respuesta `200`:** médico actualizado. **Respuesta `404`**: `code: "MEDICO_NOT_FOUND"`.
+
+#### `DELETE /medicos/:id`
+Elimina un médico. **Respuesta `204`** (sin cuerpo). **Respuesta `404`**: `code: "MEDICO_NOT_FOUND"`.
 
 ### Turnos
 
+#### `GET /turnos`
+Lista turnos, con filtros opcionales.
+
+**Query params:** `especialidad`, `fecha` (`AAAA-MM-DD`), `medicoId` (number).
+
+#### `GET /turnos/:id`
+Obtiene un turno por id. **Respuesta `404`**: `code: "TURNO_NOT_FOUND"`.
+
 #### `POST /turnos`
-Crea un turno asociado a un médico existente.
+Crea un turno. Body validado contra `turnoSchema`.
 
 **Body:**
 ```json
 {
-  "medicoId": 12,
   "paciente": "Juan Pérez",
-  "fecha": "2026-09-15",
-  "hora": "10:30"
+  "documento": "12345678",
+  "especialidad": "Nutrición",
+  "fecha": "2026-10-01",
+  "hora": "10:00",
+  "confirmado": false,
+  "medicoId": 2
 }
 ```
 
-**Respuesta `201`:** el turno queda vinculado al médico correcto.
+**Respuesta `201`:** turno creado. **Respuesta `400`**: `code: "VALIDATION_ERROR"`. **Respuesta `404`** (medicoId inexistente): `code: "MEDICO_NOT_FOUND"`.
 
-**Respuesta `404`** (si `medicoId` no existe):
-```json
-{
-  "error": "Médico no encontrado"
-}
-```
-
-#### `GET /turnos`
-Lista turnos. Admite filtros combinables por **query params**:
-
-| Parámetro | Tipo | Ejemplo | Descripción |
-|---|---|---|---|
-| `especialidad` | string | `?especialidad=Clínica médica` | Filtra por especialidad del médico |
-| `medicoId` | number | `?medicoId=2` | Filtra por médico |
-| `fecha` | string (`YYYY-MM-DD`) | `?fecha=2026-09-15` | Filtra por fecha del turno |
-
-**Ejemplo combinado:**
-```
-GET /turnos?especialidad=Clínica médica&medicoId=2
-```
-Devuelve `200` con todos los turnos de la especialidad indicada, correspondientes al `medicoId` dado.
+#### `PUT /turnos/:id`
+Actualiza parcialmente un turno (`turnoUpdateSchema`). Si se envía `medicoId`, se revalida su existencia.
 
 #### `DELETE /turnos/:id`
-Elimina un turno existente.
+Elimina un turno. **Respuesta `204`**. **Respuesta `404`**: `code: "TURNO_NOT_FOUND"`.
 
+### General
+
+#### `GET /`
+Endpoint de bienvenida. **Respuesta `200`:**
+```json
+{ "status": 200, "message": "Bienvenido a la API TurnosRed", "code": "OK", "details": [] }
 ```
-DELETE /turnos/110
-```
 
-**Respuesta `204`:** sin cuerpo.
+#### Cualquier ruta no contemplada
+**Respuesta `404`:** `code: "ROUTE_NOT_FOUND"`, con el método y la ruta solicitada en `message`.
 
-## Casos de prueba (Postman)
+## Módulo Pacientes (propuesta)
 
-Colección `TurnosRed` — entorno `TurnosRed - Local`. Ejecución completa vía Runner: **17/17 tests aprobados, 0 fallidos, 0 omitidos** (1 s 156 ms).
+La entidad Pacientes todavía no está implementada. Su diseño conceptual, modelado de datos y la definición de los endpoints `POST /pacientes` y `GET /pacientes/:id` están documentados en [`pacientes-turnos.md`](./pacientes-turnos.md).
 
-| # | Método | Endpoint | Caso | Resultado esperado |
-|---|--------|----------|------|---------------------|
-| 1 | POST | `/medicos` | Alta de un nuevo médico | `201` — la respuesta tiene la forma de un médico y su `id` se guarda para las siguientes solicitudes |
-| 2 | GET | `/medicos/:id` | Consulta de un médico existente | `200` — devuelve el médico esperado |
-| 3 | GET | `/medicos/9999` | Consulta de un médico inexistente | `404` — código de error correcto |
-| 4 | POST | `/medicos` | Alta con especialidad inválida | `400` — respuesta con el formato estándar de error |
-| 5 | POST | `/turnos` | Alta de un turno | `201` — el turno queda vinculado al médico correcto |
-| 6 | GET | `/turnos?especialidad=...&medicoId=...` | Filtro combinado por especialidad y médico | `200` — todos los resultados coinciden con el filtro |
-| 7 | POST | `/turnos` | Alta de un turno con médico inexistente | `404` — código de error correcto |
-| 8 | DELETE | `/turnos/:id` | Baja de un turno existente | `204` — la respuesta no tiene cuerpo |
+## Pruebas
 
-**Intervención manual:** durante la ejecución inicial, el caso *POST /turnos — médico inexistente* devolvía intermitentemente `500` en lugar de `404` porque el mock server reutilizaba una respuesta guardada de una corrida anterior. Se corrigió manualmente el ejemplo de respuesta del mock (código `404` y cuerpo `{ "error": "Médico no encontrado" }`) y se volvió a validar el caso de forma individual antes de correr la colección completa.
+La validación funcional y de integración se realiza mediante la colección de Postman `TurnosRed` (entorno `TurnosRed - Local`, con la variable `baseUrl`), que cubre los casos exitosos y los principales escenarios de error (datos inválidos, recursos inexistentes, rutas no encontradas).
+
+> Nota (Módulo 4): a futuro, estos mismos escenarios podrían automatizarse con **Jest + Supertest** como pruebas de integración ejecutables desde `npm test`, complementando las pruebas E2E manuales en Postman.
 
 ## Uso de Inteligencia Artificial
 
-Se utilizaron asistentes de IA como apoyo en distintas tareas de desarrollo y testing. Todas las respuestas generadas fueron revisadas y ajustadas manualmente antes de integrarse al proyecto.
-
 | Tarea | Herramienta | Prompt | Respuesta generada | Ajuste manual aplicado |
 |---|---|---|---|---|
-| Schema de validación de médico | Claude | "Necesito un schema Zod para validar un médico con nombre (string), especialidad (enum: Clínica médica, Nutrición, Pediatría), matrícula (string con formato MP-#####) y disponible (boolean, opcional)." | ```const MedicoSchema = z.object({ nombre: z.string(), especialidad: z.enum(["clinica_medica","nutricion","pediatria"]), matricula: z.string().regex(/^MP-\d{5}$/), disponible: z.boolean().optional() })``` | Se pasaron los valores del enum a `PascalCase` con tildes ("Clínica médica", "Nutrición", "Pediatría") para que coincidan con los datos reales, y se renombraron los campos a `camelCase` consistentes con el resto del modelo. |
-| Test de error 404 en Postman | Claude | "Necesito un test en Postman (pm.test) que valide que la respuesta de POST /turnos ante un medicoId inexistente devuelva status 404 y un cuerpo con la propiedad `error`. ¿Cómo lo escribo?" | ```pm.test("Status code es 404", () => { pm.response.to.have.status(404); }); pm.test("Código de error correcto", () => { const body = pm.response.json(); pm.expect(body).to.have.property("error"); });``` | Ninguno: el código se usó tal cual y se replicó en los demás casos de error de ambas colecciones. |
-| Filtro combinado de turnos | Claude | "Dame la lógica en Express para filtrar un array de turnos por especialidad del médico asociado y por medicoId, ambos query params opcionales." | ```const filtered = turnos.filter(t => { const medico = medicos.find(m => m.id === t.medicoId); if (especialidad && medico.especialidad !== especialidad) return false; if (medicoId && t.medicoId !== Number(medicoId)) return false; return true; });``` | Se agregó el manejo de `especialidad` con espacios/acentos (`decodeURIComponent`) y la validación de que `medico` exista antes de acceder a `medico.especialidad`, para evitar un error si el turno quedó huérfano. |
+| Generación de la documentación de endpoints del README | Claude | "Comparto mis archivos de rutas (`medicos.routes.ts`, `turnos.routes.ts`) y controllers (`.ts`); generá la documentación Markdown de cada endpoint con método, path, params, body y respuestas." | Bloques Markdown con la estructura de secciones por entidad, ejemplos de body/response en JSON. | Se ajustaron los ejemplos para que coincidan exactamente con los schemas Zod reales (`medicoSchema`, `turnoSchema`) y los códigos de error reales (`MEDICO_NOT_FOUND`, `TURNO_NOT_FOUND`, `VALIDATION_ERROR`). |
+| Diseño conceptual del módulo Pacientes | Claude | "Proponeme el modelado de datos mínimo para una entidad Paciente en un sistema de turnos médicos, y dos endpoints RESTful siguiendo Clean Architecture." | Interfaz `PacienteNuevo`/`Paciente` en TypeScript y definición de `POST /pacientes` y `GET /pacientes/:id`. | Se alinearon los nombres de campo con la convención `camelCase` ya usada en el proyecto y se agregó la nota de seguridad sobre datos personales. |
 
 ---
+*Documento actualizado para reflejar el estado del proyecto en la Actividad 4.*
